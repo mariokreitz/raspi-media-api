@@ -5,7 +5,7 @@ import { errorHandler } from './middlewares/errorHandler.middleware.js';
 import { logger, morganMiddleware } from './utils/logger.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
-import { checkInternet } from './utils/network.util.js';
+import { checkInternet } from './utils/network.js';
 
 dotenv.config();
 
@@ -13,10 +13,10 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const swaggerOptions = {
-    swaggerDefinition: {
+    definition: {
         openapi: '3.0.0',
         info: {
-            title: 'Heim-Netflix API',
+            title: 'Raspi Media API',
             version: '1.0.0',
             description: 'API for managing and streaming media files',
         },
@@ -34,7 +34,7 @@ app.use('/api/media', mediaRoutes);
 app.use(errorHandler);
 
 app.get('/', (req, res) => {
-    res.send('Heim-Netflix API is running');
+    res.send('Raspi Media API is running');
 });
 
 app.listen(port, () => {
