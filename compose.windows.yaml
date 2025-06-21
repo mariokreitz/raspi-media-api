@@ -6,6 +6,6 @@ services:
       - "3000:3000"
     volumes:
       - ./data:/app/data
-      - /mnt/nas:/mnt/nas
+      - //host.docker.internal/z/Homeflix:/mnt/nas/Homeflix
     environment:
       - TMDB_API_KEY=${TMDB_API_KEY}
