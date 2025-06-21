@@ -7,43 +7,22 @@ export async function openDb() {
         driver: sqlite3.Database,
     });
 
-    await db.exec(`
-        CREATE TABLE IF NOT EXISTS media
-        (
-            id
-            INTEGER
-            PRIMARY
-            KEY
-            AUTOINCREMENT,
-            filename
-            TEXT,
-            filepath
-            TEXT,
-            filesize
-            INTEGER,
-            title
-            TEXT,
-            description
-            TEXT,
-            poster
-            TEXT,
-            year
-            TEXT,
-            genre
-            TEXT,
-            language
-            TEXT,
-            rating
-            REAL,
-            watched
-            INTEGER
-            DEFAULT
-            0,
-            favorite
-            INTEGER
-            DEFAULT
-            0
-        )
+    await db.exec(`CREATE TABLE IF NOT EXISTS media
+                   (
+                       id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                       filename    TEXT,
+                       filepath    TEXT,
+                       filesize    INTEGER,
+                       title       TEXT,
+                       description TEXT,
+                       poster      TEXT,
+                       year        TEXT,
+                       genre       TEXT,
+                       language    TEXT,
+                       rating      REAL,
+                       watched     INTEGER DEFAULT 0,
+                       favorite    INTEGER DEFAULT 0
+                   )
     `);
 
     return db;
