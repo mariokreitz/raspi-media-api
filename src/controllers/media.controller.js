@@ -14,6 +14,40 @@ const MEDIA_EXTENSIONS = (process.env.MEDIA_EXTENSIONS || '.mp4,.mkv,.avi,.mov')
     .split(',')
     .map(ext => ext.trim().toLowerCase());
 
+
+export const getPoster = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        console.log(`Suche Poster für Media ID: ${id}`);
+
+        const db = await openDb();
+        const media = await db.get('SELECT poster FROM media WHERE id = ?', [id]);
+
+        console.log('Gefundenes Media-Objekt:', media);
+
+        if (!media || !media.poster) {
+            return next(new AppError('Poster nicht gefunden', 404));
+        }
+
+        const posterPath = path.isAbsolute(media.poster)
+            ? media.poster
+            : path.resolve(process.cwd(), media.poster);
+
+        console.log(`Poster absoluter Pfad: ${posterPath}`);
+
+        if (!fs.existsSync(posterPath)) {
+            console.error(`Datei existiert nicht: ${posterPath}`);
+            return next(new AppError('Poster-Datei nicht gefunden', 404));
+        }
+
+        res.sendFile(posterPath);
+    } catch (error) {
+        console.error('Fehler in getPoster:', error);
+        next(new AppError('Fehler beim Abrufen des Posters', 500));
+    }
+};
+
 export const getMedia = async (req, res, next) => {
     try {
         const db = await openDb();

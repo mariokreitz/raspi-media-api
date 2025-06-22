@@ -4,6 +4,7 @@ import {
     getGenres,
     getMedia,
     getPlaybackPosition,
+    getPoster,
     getStats,
     getWatched,
     scanMedia,
@@ -218,7 +219,7 @@ router.get('/watched', getWatched);
  *       200:
  *         description: Playback position updated
  */
-router.put('/media/:id/position', updatePlaybackPosition);
+router.put('/:id/position', updatePlaybackPosition);
 
 /**
  * @swagger
@@ -247,7 +248,34 @@ router.put('/media/:id/position', updatePlaybackPosition);
  *       404:
  *         description: Media or position not found
  */
-router.get('/media/:id/position', getPlaybackPosition);
+router.get('/:id/position', getPlaybackPosition);
+
+
+/**
+ * @swagger
+ * /api/media/{id}/poster:
+ *   get:
+ *     summary: Get the poster image for a media item
+ *     tags: [Media]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Media ID
+ *     responses:
+ *       200:
+ *         description: Poster image returned
+ *         content:
+ *           image/jpeg:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Poster not found
+ */
+router.get('/:id/poster', getPoster);
 
 /**
  * @swagger
