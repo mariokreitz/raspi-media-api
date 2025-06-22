@@ -1,60 +1,94 @@
-### Building and running your application
+# Docker Guide for Raspi Media API
 
-To build and start your application, run:
-`docker compose up --build`.
+This guide explains how to build and run the Raspi Media API using Docker and Docker Compose.
 
-Your application will be available at http://localhost:3000.
+---
 
-#### Environment variables
+## Quick Start
 
-You can configure the application using environment variables, either via a `.env` file or directly in your compose
-command. Important variables include:
+### Build & Run (Default)
+
+```bash
+docker compose --profile base up --build
+```
+
+The API will be available at [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Environment Variables
+
+Configure the application via a `.env` file or by passing variables directly. Key variables:
 
 - `PORT` (default: 3000)
-- `TMDB_API_KEY`
+- `TMDB_API_KEY` (required)
 - `MEDIA_BASE_PATH` (default: `/mnt/nas/Homeflix`)
 - `MOVIES_DIR` (default: `Movies`)
 - `SERIES_DIR` (default: `Series`)
-- (for Windows/NAS) `NAS_SERVER`, `NAS_SHARE`, `NAS_USER`, `NAS_PASS`
+- (Windows/NAS only) `NAS_SERVER`, `NAS_SHARE`, `NAS_USER`, `NAS_PASS`
 
-#### Volumes
+See `.env.example` for a template.
 
-The application stores persistent data (e.g. posters, database) in the `./data` directory, which is mounted into the
-container at `/app/data`.
+---
 
-#### Profiles
+## Volumes
+
+Persistent data (e.g. posters, database) is stored in the `./data` directory, mounted into the container at `/app/data`.
+
+For Linux, you can also mount your media directory directly:
+
+```yaml
+# docker-compose.yaml (linux profile)
+volumes:
+  - ./data:/app/data
+  - /mnt/nas/Homeflix:/mnt/nas/Homeflix
+```
+
+---
+
+## Docker Compose Profiles
 
 The `docker-compose.yaml` provides different profiles for various environments:
 
-- `base`: Standard-Konfiguration (nutzt lokale Daten)
-- `windows`: Für Windows mit SMB/NAS-Mount (setzt zusätzliche NAS-Variablen, benötigt privilegierten Modus)
-- `linux`: Für Linux mit direktem Host-Mount (bind-mount auf MEDIA_BASE_PATH)
+- **base**: Standard configuration (local data only)
+- **windows**: For Windows with SMB/NAS mount (requires NAS variables and privileged mode)
+- **linux**: For Linux with direct host mount (bind-mounts your media path)
 
-Example for Windows:
+### Example: Windows (SMB/NAS)
 
-```
+```bash
 docker compose --profile windows up --build
 ```
 
-Example for Linux:
+### Example: Linux (direct mount)
 
-```
+```bash
 docker compose --profile linux up --build
 ```
 
-### Deploying your application to the cloud
+---
 
-First, build your image, e.g.: `docker build -t myapp .`.
-If your cloud uses a different CPU architecture than your development
-machine (e.g., you are on a Mac M1 and your cloud provider is amd64),
-you'll want to build the image for that platform, e.g.:
-`docker build --platform=linux/amd64 -t myapp .`.
+## Deploying to the Cloud
 
-Then, push it to your registry, e.g. `docker push myregistry.com/myapp`.
+1. Build your image for the correct platform (if needed):
 
-Consult Docker's [getting started](https://docs.docker.com/go/get-started-sharing/)
-docs for more detail on building and pushing.
+   ```bash
+   docker build --platform=linux/amd64 -t myapp .
+   ```
 
-### References
+2. Push to your registry:
 
-* [Docker's Node.js guide](https://docs.docker.com/language/nodejs/)
+   ```bash
+   docker push myregistry.com/myapp
+   ```
+
+3. Deploy using your cloud provider's instructions.
+
+See Docker's [getting started guide](https://docs.docker.com/go/get-started-sharing/) for more details.
+
+---
+
+## References
+
+- [Docker's Node.js guide](https://docs.docker.com/language/nodejs/)
+- [Official Docker documentation](https://docs.docker.com/)
