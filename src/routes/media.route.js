@@ -19,43 +19,68 @@ const router = express.Router();
 
 /**
  * @swagger
- * openapi: 3.0.0
- * info:
- *   title: Raspi Media API
- *   version: 1.0.0
- *   description: API for managing and streaming media files
- * servers:
- *   - url: http://localhost:3000
- */
-
-/**
- * @swagger
  * tags:
- *   name: Media
- *   description: Media management and streaming
+ *   - name: Media
+ *     description: Media management and streaming endpoints
  */
 
 /**
  * @swagger
  * /api/media:
  *   get:
- *     summary: List all media (optionally filtered by genre)
+ *     summary: Get a list of all media items with optional pagination and genre filtering
  *     tags: [Media]
  *     parameters:
  *       - in: query
  *         name: genre
  *         schema:
  *           type: string
- *         description: Genre filter (e.g. Action, Drama)
+ *         description: Filter by genre (e.g. Action, Drama)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
- *         description: Success
+ *         description: List of media items and pagination info
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
+ *               type: object
+ *               properties:
+ *                 media:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Media'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       description: Total number of items
+ *                     totalPages:
+ *                       type: integer
+ *                       description: Total number of pages
+ *                     currentPage:
+ *                       type: integer
+ *                       description: Current page number
+ *                     limit:
+ *                       type: integer
+ *                       description: Items per page
+ *                     hasNextPage:
+ *                       type: boolean
+ *                       description: Indicates if there is a next page
+ *                     hasPrevPage:
+ *                       type: boolean
+ *                       description: Indicates if there is a previous page
  */
 router.get('/', getMedia);
 
@@ -63,11 +88,15 @@ router.get('/', getMedia);
  * @swagger
  * /api/media/scan:
  *   post:
- *     summary: Scan the media directory and fetch metadata
+ *     summary: Scan the media directories and fetch metadata for all media files
  *     tags: [Media]
  *     responses:
  *       200:
- *         description: Scan completed
+ *         description: Scan completed successfully
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
 router.post('/scan', scanMedia);
 
@@ -75,11 +104,11 @@ router.post('/scan', scanMedia);
  * @swagger
  * /api/media/genres:
  *   get:
- *     summary: List all available genres
+ *     summary: Get a list of all available genres
  *     tags: [Media]
  *     responses:
  *       200:
- *         description: Success
+ *         description: List of genres
  *         content:
  *           application/json:
  *             schema:
@@ -93,7 +122,7 @@ router.get('/genres', getGenres);
  * @swagger
  * /api/media/stream/{id}:
  *   get:
- *     summary: Stream a media file by ID
+ *     summary: Stream a media file by its ID
  *     tags: [Media]
  *     parameters:
  *       - in: path
@@ -101,10 +130,10 @@ router.get('/genres', getGenres);
  *         required: true
  *         schema:
  *           type: integer
- *         description: Media ID
+ *         description: Media item ID
  *     responses:
  *       206:
- *         description: Partial Content (streaming)
+ *         description: Partial content (streaming)
  *       200:
  *         description: Success
  *       404:
@@ -116,17 +145,49 @@ router.get('/stream/:id', streamMedia);
  * @swagger
  * /api/media/search:
  *   get:
- *     summary: Search media by title, description, or filename
+ *     summary: Search for media by title, description, or filename
  *     tags: [Media]
  *     parameters:
  *       - in: query
  *         name: q
  *         schema:
  *           type: string
- *         description: Search query
+ *         description: Search query string
  *     responses:
  *       200:
- *         description: Success
+ *         description: Search results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 movies:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Media'
+ *                 series:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                       overview:
+ *                         type: string
+ *                       poster:
+ *                         type: string
+ *                       year:
+ *                         type: string
+ *                       genre:
+ *                         type: string
+ *                       rating:
+ *                         type: number
+ *                       mediaType:
+ *                         type: string
+ *                       episodes:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Media'
  */
 router.get('/search', searchMedia);
 
@@ -134,7 +195,7 @@ router.get('/search', searchMedia);
  * @swagger
  * /api/media/{id}/favorite:
  *   patch:
- *     summary: Toggle favorite status for a media item
+ *     summary: Toggle the favorite status for a media item
  *     tags: [Media]
  *     parameters:
  *       - in: path
@@ -142,10 +203,17 @@ router.get('/search', searchMedia);
  *         required: true
  *         schema:
  *           type: integer
- *         description: Media ID
+ *         description: Media item ID
  *     responses:
  *       200:
- *         description: Favorite toggled
+ *         description: Favorite status toggled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.patch('/:id/favorite', toggleFavorite);
 
@@ -153,7 +221,7 @@ router.patch('/:id/favorite', toggleFavorite);
  * @swagger
  * /api/media/{id}/watch:
  *   patch:
- *     summary: Toggle watched status for a media item
+ *     summary: Toggle the watched status for a media item
  *     tags: [Media]
  *     parameters:
  *       - in: path
@@ -161,10 +229,17 @@ router.patch('/:id/favorite', toggleFavorite);
  *         required: true
  *         schema:
  *           type: integer
- *         description: Media ID
+ *         description: Media item ID
  *     responses:
  *       200:
- *         description: Watched toggled
+ *         description: Watched status toggled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.patch('/:id/watch', toggleWatched);
 
@@ -172,11 +247,17 @@ router.patch('/:id/watch', toggleWatched);
  * @swagger
  * /api/media/favorites:
  *   get:
- *     summary: List all favorite media
+ *     summary: Get all favorite media items
  *     tags: [Media]
  *     responses:
  *       200:
- *         description: Success
+ *         description: List of favorite media
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Media'
  */
 router.get('/favorites', getFavorites);
 
@@ -184,11 +265,17 @@ router.get('/favorites', getFavorites);
  * @swagger
  * /api/media/watched:
  *   get:
- *     summary: List all watched media
+ *     summary: Get all watched media items
  *     tags: [Media]
  *     responses:
  *       200:
- *         description: Success
+ *         description: List of watched media
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Media'
  */
 router.get('/watched', getWatched);
 
@@ -204,7 +291,7 @@ router.get('/watched', getWatched);
  *         required: true
  *         schema:
  *           type: integer
- *         description: Media ID
+ *         description: Media item ID
  *     requestBody:
  *       required: true
  *       content:
@@ -218,6 +305,13 @@ router.get('/watched', getWatched);
  *     responses:
  *       200:
  *         description: Playback position updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.put('/:id/position', updatePlaybackPosition);
 
@@ -233,7 +327,7 @@ router.put('/:id/position', updatePlaybackPosition);
  *         required: true
  *         schema:
  *           type: integer
- *         description: Media ID
+ *         description: Media item ID
  *     responses:
  *       200:
  *         description: Current playback position
@@ -242,14 +336,16 @@ router.put('/:id/position', updatePlaybackPosition);
  *             schema:
  *               type: object
  *               properties:
- *                 position:
+ *                 playback_position:
  *                   type: number
  *                   description: Playback position in seconds
+ *                 last_played:
+ *                   type: string
+ *                   format: date-time
  *       404:
  *         description: Media or position not found
  */
 router.get('/:id/position', getPlaybackPosition);
-
 
 /**
  * @swagger
@@ -263,7 +359,7 @@ router.get('/:id/position', getPlaybackPosition);
  *         required: true
  *         schema:
  *           type: integer
- *         description: Media ID
+ *         description: Media item ID
  *     responses:
  *       200:
  *         description: Poster image returned
@@ -281,11 +377,11 @@ router.get('/:id/poster', getPoster);
  * @swagger
  * /api/media/stats:
  *   get:
- *     summary: Get media statistics
+ *     summary: Get statistics about the media catalog
  *     tags: [Media]
  *     responses:
  *       200:
- *         description: Success
+ *         description: Media statistics
  *         content:
  *           application/json:
  *             schema:
@@ -306,7 +402,7 @@ router.get('/stats', getStats);
  * @swagger
  * /api/media/health:
  *   get:
- *     summary: Health check endpoint
+ *     summary: Health check endpoint for the API
  *     tags: [Media]
  *     responses:
  *       200:
@@ -327,5 +423,47 @@ router.get('/health', (req, res) => {
         uptime: process.uptime(),
     });
 });
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Media:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         filename:
+ *           type: string
+ *         filepath:
+ *           type: string
+ *         filesize:
+ *           type: integer
+ *         title:
+ *           type: string
+ *         mediaType:
+ *           type: string
+ *         description:
+ *           type: string
+ *         poster:
+ *           type: string
+ *         year:
+ *           type: string
+ *         genre:
+ *           type: string
+ *         language:
+ *           type: string
+ *         rating:
+ *           type: number
+ *         watched:
+ *           type: integer
+ *         favorite:
+ *           type: integer
+ *         playback_position:
+ *           type: number
+ *         last_played:
+ *           type: string
+ *           format: date-time
+ */
 
 export default router;

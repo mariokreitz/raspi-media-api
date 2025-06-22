@@ -147,16 +147,49 @@ export const getPoster = async (req, res, next) => {
 export const getMedia = async (req, res, next) => {
     try {
         const db = await openDb();
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
+
         const { genre } = req.query;
-        let query = 'SELECT * FROM media';
+
+        let queryBase = 'FROM media';
+        const whereClause = [];
         const params = [];
+
         if (genre) {
-            query += ' WHERE genre LIKE ?';
+            whereClause.push('genre LIKE ?');
             params.push(`%${genre}%`);
         }
-        const media = await db.all(query, params);
-        res.json(media);
-    } catch {
+
+        const whereStatement = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+        const query = `SELECT * ${queryBase} ${whereStatement} ORDER BY title LIMIT ? OFFSET ?`;
+        const countQuery = `SELECT COUNT(*) as total ${queryBase} ${whereStatement}`;
+
+        const queryParams = [...params, limit, offset];
+
+        const [media, countResult] = await Promise.all([
+            db.all(query, queryParams),
+            db.get(countQuery, params),
+        ]);
+
+        const total = countResult.total;
+        const totalPages = Math.ceil(total / limit);
+
+        res.json({
+            media,
+            pagination: {
+                total,
+                totalPages,
+                currentPage: page,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        });
+    } catch (error) {
         next(new AppError('Error fetching media', 500));
     }
 };
@@ -305,7 +338,7 @@ export const searchMedia = async (req, res, next) => {
         for (const episode of tvEpisodes) {
             const pathParts = episode.filepath.split(path.sep);
             const seriesIndex = pathParts.findIndex(part => part === SERIES_DIR);
-            let seriesName = 'Unbekannte Serie';
+            let seriesName = 'Unknown Series';
 
             if (seriesIndex >= 0 && seriesIndex < pathParts.length - 1) {
                 seriesName = pathParts[seriesIndex + 1];
@@ -338,7 +371,7 @@ export const searchMedia = async (req, res, next) => {
                         }
                     }
                 } catch (err) {
-                    logger.warn(`Konnte keine Seriendetails für ${seriesName} laden: ${err.message}`);
+                    logger.warn(`Could not load series details for ${seriesName}: ${err.message}`);
                 }
             }
 
@@ -352,7 +385,7 @@ export const searchMedia = async (req, res, next) => {
             series,
         });
     } catch (error) {
-        logger.error('Fehler bei der Mediensuche:', error);
+        logger.error('Error searching media:', error);
         next(new AppError('Error searching media', 500));
     }
 };
