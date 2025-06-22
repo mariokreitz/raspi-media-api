@@ -19,32 +19,25 @@ export const getPoster = async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        console.log(`Suche Poster für Media ID: ${id}`);
-
         const db = await openDb();
         const media = await db.get('SELECT poster FROM media WHERE id = ?', [id]);
 
-        console.log('Gefundenes Media-Objekt:', media);
-
         if (!media || !media.poster) {
-            return next(new AppError('Poster nicht gefunden', 404));
+            return next(new AppError('Poster not found', 404));
         }
 
         const posterPath = path.isAbsolute(media.poster)
             ? media.poster
             : path.resolve(process.cwd(), media.poster);
 
-        console.log(`Poster absoluter Pfad: ${posterPath}`);
 
         if (!fs.existsSync(posterPath)) {
-            console.error(`Datei existiert nicht: ${posterPath}`);
-            return next(new AppError('Poster-Datei nicht gefunden', 404));
+            return next(new AppError('Poster file not found', 404));
         }
 
         res.sendFile(posterPath);
     } catch (error) {
-        console.error('Fehler in getPoster:', error);
-        next(new AppError('Fehler beim Abrufen des Posters', 500));
+        next(new AppError('Error retrieving poster', 500));
     }
 };
 
