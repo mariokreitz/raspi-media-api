@@ -14,9 +14,9 @@ const MEDIA_EXTENSIONS = (process.env.MEDIA_EXTENSIONS || '.mp4,.mkv,.avi,.mov')
     .split(',')
     .map(ext => ext.trim().toLowerCase());
 
-const getPosterPath = poster =>
-    path.isAbsolute(poster) ? poster : path.resolve(process.cwd(), poster);
-
+/**
+ * Fetches TMDB series data by title.
+ */
 const fetchTmdbSeriesData = async (seriesTitle) => {
     try {
         const response = await tmdbApi.searchTv(seriesTitle);
@@ -32,6 +32,9 @@ const fetchTmdbSeriesData = async (seriesTitle) => {
     }
 };
 
+/**
+ * Fetches TMDB episode data by series ID, season number, and episode number.
+ */
 const fetchTmdbEpisodeData = async (seriesId, seasonNumber, episodeNumber) => {
     try {
         const episodes = await tmdbApi.getSeasonEpisodes(seriesId, seasonNumber);
@@ -119,30 +122,6 @@ const fetchTmdbData = async (filename, filepath, options = {}) => {
         rating,
         mediaType,
     };
-};
-
-/**
- * Returns the poster image for a media item.
- */
-export const getPoster = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const db = await openDb();
-        const media = await db.get('SELECT poster FROM media WHERE id = ?', [id]);
-        if (!media?.poster) {
-            logger.warn(`Poster not found for media id=${id}`);
-            return next(new AppError('Poster not found', 404));
-        }
-        const posterPath = getPosterPath(media.poster);
-        if (!fs.existsSync(posterPath)) {
-            logger.warn(`Poster file not found at path: ${posterPath}`);
-            return next(new AppError('Poster file not found', 404));
-        }
-        res.sendFile(posterPath);
-    } catch (err) {
-        logger.error(`Error retrieving poster: ${err.message}`);
-        next(new AppError('Error retrieving poster', 500));
-    }
 };
 
 /**

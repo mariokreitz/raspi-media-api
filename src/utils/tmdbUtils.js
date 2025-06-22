@@ -72,18 +72,26 @@ function sanitizeFolderName(name) {
  * @param {string} filename - The local filename to save as (e.g. poster_myseries.jpg)
  * @param {string} [type='poster'] - 'poster' or 'backdrop'
  * @param {string} [mediaTitle=''] - The media title for folder organization
- * @returns {Promise<string>} The local relative path (e.g. /data/posters/title/file.jpg) or '' on failure
+ * @returns {Promise<string>} The local relative path (e.g. /posters/title/file.jpg) or '' on failure
  */
 export async function downloadImageFromTmdb(imagePath, filename, type = 'poster', mediaTitle = '') {
     if (!imagePath) return '';
     const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/original';
     const sanitizedTitle = sanitizeFolderName(mediaTitle);
-    const baseDir = path.resolve('./data', type === 'backdrop' ? 'backdrops' : 'posters', sanitizedTitle);
+
+    const POSTER_BASE_PATH = process.env.POSTER_BASE_PATH || './data/posters';
+    const baseDir = path.resolve(
+        POSTER_BASE_PATH,
+        sanitizedTitle,
+    );
+
     if (!fs.existsSync(baseDir)) {
         fs.mkdirSync(baseDir, { recursive: true });
     }
-    const localPath = `/data/${type === 'backdrop' ? 'backdrops' : 'posters'}/${sanitizedTitle}/${filename}`;
+
+    const localPath = `/posters/${sanitizedTitle}/${filename}`;
     const fullLocalPath = path.join(baseDir, filename);
+
     try {
         const url = `${TMDB_IMAGE_BASE}${imagePath}`;
         const response = await axios({ url, method: 'GET', responseType: 'stream' });

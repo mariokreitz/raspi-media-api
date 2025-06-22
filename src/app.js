@@ -6,11 +6,15 @@ import { logger, morganMiddleware } from './utils/logger.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
 import { checkInternet } from './utils/network.js';
+import path from 'path';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const POSTER_BASE_PATH = process.env.POSTER_BASE_PATH || path.resolve('./data/posters');
+app.use('/data/posters', express.static(POSTER_BASE_PATH));
 
 const swaggerOptions = {
     definition: {
@@ -35,7 +39,7 @@ app.use(errorHandler);
 
 /**
  * @swagger
- * /api/media/:
+ * /:
  *   get:
  *     summary: Funny API root endpoint
  *     tags: [Media]

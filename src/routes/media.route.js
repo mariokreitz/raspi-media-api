@@ -4,7 +4,6 @@ import {
     getGenres,
     getMedia,
     getPlaybackPosition,
-    getPoster,
     getStats,
     getWatched,
     scanMedia,
@@ -35,13 +34,13 @@ const router = express.Router();
  *         name: genre
  *         schema:
  *           type: string
- *         description: Filter series by genre (e.g. Action, Drama)
+ *         description: Filter series by genre (e.g. "Sci-Fi", "Drama")
  *       - in: query
  *         name: mediaType
  *         schema:
  *           type: string
  *           enum: [series, movie]
- *         description: Filter by media type
+ *         description: Filter by media type ("series" or "movie")
  *       - in: query
  *         name: page
  *         schema:
@@ -60,32 +59,25 @@ const router = express.Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 series:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Series'
- *                 pagination:
- *                   $ref: '#/components/schemas/Pagination'
+ *               $ref: '#/components/schemas/MediaResponse'
  *             examples:
  *               example:
  *                 value:
  *                   series:
  *                     - id: 1
- *                       title: "The Office"
- *                       overview: "A mockumentary on a group of typical office workers..."
- *                       genre: "Comedy"
- *                       poster: "/data/posters/the_office/poster.jpg"
- *                       backdrop: "/data/backdrops/the_office/backdrop.jpg"
+ *                       title: "Attack on Titan"
+ *                       overview: "After his hometown is destroyed and his mother is killed, young Eren Jaeger joins the Survey Corps..."
+ *                       genre: "Animation, Action & Adventure, Sci-Fi & Fantasy"
+ *                       poster: "/posters/attack_on_titan/poster.jpg"
+ *                       backdrop: "/posters/attack_on_titan/backdrop.jpg"
  *                       mediaType: "series"
  *                       episodes:
  *                         - id: 101
- *                           title: "Pilot"
- *                           filepath: "/Serien/The Office/Staffel 1/E01.mp4"
- *                           poster: "/data/posters/the_office/S1E1.jpg"
- *                           year: "2005"
- *                           genre: "Comedy"
+ *                           title: "To You, in 2000 Years: The Fall of Shiganshina, Part 1"
+ *                           filepath: "/Series/Attack on Titan/Season 1/E01.mp4"
+ *                           poster: "/posters/attack_on_titan/S1E1.jpg"
+ *                           year: "2013"
+ *                           genre: "Animation, Action & Adventure, Sci-Fi & Fantasy"
  *                           mediaType: "series"
  *                           seriesId: 1
  *                   pagination:
@@ -444,41 +436,8 @@ router.put('/:id/position', updatePlaybackPosition);
  */
 router.get('/:id/position', getPlaybackPosition);
 
-/**
- * @swagger
- * /api/media/{id}/poster:
- *   get:
- *     summary: Get the poster image for a media item (movie, episode, or series)
- *     tags: [Media]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Media item ID
- *     responses:
- *       200:
- *         description: Poster image returned
- *         content:
- *           image/jpeg:
- *             schema:
- *               type: string
- *               format: binary
- *       404:
- *         description: Poster not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get('/:id/poster', getPoster);
+// Obsolete: posters are now served as static files, so this endpoint is not needed
+// router.get('/:id/poster', getPoster);
 
 /**
  * @swagger
@@ -541,6 +500,15 @@ router.get('/health', (req, res) => {
  * @swagger
  * components:
  *   schemas:
+ *     MediaResponse:
+ *       type: object
+ *       properties:
+ *         series:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Series'
+ *         pagination:
+ *           $ref: '#/components/schemas/Pagination'
  *     Series:
  *       type: object
  *       properties:
@@ -549,19 +517,19 @@ router.get('/health', (req, res) => {
  *           example: 1
  *         title:
  *           type: string
- *           example: "The Office"
+ *           example: "Attack on Titan"
  *         overview:
  *           type: string
- *           example: "A mockumentary on a group of typical office workers..."
+ *           example: "After his hometown is destroyed and his mother is killed, young Eren Jaeger joins the Survey Corps..."
  *         genre:
  *           type: string
- *           example: "Comedy"
+ *           example: "Animation, Action & Adventure, Sci-Fi & Fantasy"
  *         poster:
  *           type: string
- *           example: "/data/posters/the_office/poster.jpg"
+ *           example: "/posters/attack_on_titan/poster.jpg"
  *         backdrop:
  *           type: string
- *           example: "/data/backdrops/the_office/backdrop.jpg"
+ *           example: "/posters/attack_on_titan/backdrop.jpg"
  *         mediaType:
  *           type: string
  *           enum: [series, movie]
@@ -578,19 +546,19 @@ router.get('/health', (req, res) => {
  *           example: 101
  *         title:
  *           type: string
- *           example: "Pilot"
+ *           example: "To You, in 2000 Years: The Fall of Shiganshina, Part 1"
  *         filepath:
  *           type: string
- *           example: "/Serien/The Office/Staffel 1/E01.mp4"
+ *           example: "/Series/Attack on Titan/Season 1/E01.mp4"
  *         poster:
  *           type: string
- *           example: "/data/posters/the_office/S1E1.jpg"
+ *           example: "/posters/attack_on_titan/S1E1.jpg"
  *         year:
  *           type: string
- *           example: "2005"
+ *           example: "2013"
  *         genre:
  *           type: string
- *           example: "Comedy"
+ *           example: "Animation, Action & Adventure, Sci-Fi & Fantasy"
  *         mediaType:
  *           type: string
  *           enum: [series, movie]
