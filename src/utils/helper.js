@@ -1,13 +1,23 @@
-export const walkDir = (dir, mediaExtensions, fileList = []) => {
-    if (!fs.existsSync(dir)) return fileList;
-    for (const entry of fs.readdirSync(dir)) {
-        const fullPath = path.join(dir, entry);
-        const stat = fs.statSync(fullPath);
+import fs from 'fs';
+import path from 'path';
+
+export const walkDir = (dir, extensions) => {
+    let results = [];
+    const list = fs.readdirSync(dir);
+
+    for (const file of list) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+
         if (stat.isDirectory()) {
-            walkDir(fullPath, mediaExtensions, fileList);
-        } else if (stat.isFile() && mediaExtensions.includes(path.extname(entry).toLowerCase())) {
-            fileList.push(fullPath);
+            results = results.concat(walkDir(filePath, extensions));
+        } else {
+            const ext = path.extname(file).toLowerCase();
+            if (extensions.includes(ext)) {
+                results.push(filePath);
+            }
         }
     }
-    return fileList;
+
+    return results;
 };

@@ -14,6 +14,7 @@ export async function openDb() {
                        filepath    TEXT,
                        filesize    INTEGER,
                        title       TEXT,
+                       mediaType   TEXT,
                        description TEXT,
                        poster      TEXT,
                        year        TEXT,
@@ -27,3 +28,4 @@ export async function openDb() {
 
     return db;
 }
+
