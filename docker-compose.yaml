@@ -1,0 +1,64 @@
+services:
+  # Base configuration
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=${PORT:-3000}
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - MEDIA_BASE_PATH=${MEDIA_BASE_PATH:-/mnt/nas/Homeflix}
+      - MOVIES_DIR=${MOVIES_DIR:-Movies}
+      - SERIES_DIR=${SERIES_DIR:-Series}
+    profiles:
+      - base
+
+  # Windows-specific configuration
+  app-windows:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=${PORT:-3000}
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - MEDIA_BASE_PATH=${MEDIA_BASE_PATH:-/mnt/nas/Homeflix}
+      - MOVIES_DIR=${MOVIES_DIR:-Movies}
+      - SERIES_DIR=${SERIES_DIR:-Series}
+      - NAS_TYPE=smb
+      - NAS_SERVER=${NAS_SERVER}
+      - NAS_SHARE=${NAS_SHARE}
+      - NAS_USER=${NAS_USER}
+      - NAS_PASS=${NAS_PASS}
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+    profiles:
+      - windows
+
+  # Linux-specific configuration
+  app-linux:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    volumes:
+      - ./data:/app/data
+      - ${MEDIA_BASE_PATH:-/mnt/nas/Homeflix}:${MEDIA_BASE_PATH:-/mnt/nas/Homeflix}
+    environment:
+      - PORT=${PORT:-3000}
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - MEDIA_BASE_PATH=${MEDIA_BASE_PATH:-/mnt/nas/Homeflix}
+      - MOVIES_DIR=${MOVIES_DIR:-Movies}
+      - SERIES_DIR=${SERIES_DIR:-Series}
+      - NAS_TYPE=local
+    profiles:
+      - linux
