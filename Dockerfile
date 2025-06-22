@@ -1,7 +1,18 @@
-FROM node:20
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json .
-RUN npm install
+COPY package*.json ./
+RUN npm ci --only=production
+
+FROM alpine:latest
+
+RUN apk add --no-cache nodejs npm samba-client
+
+WORKDIR /app
+COPY --from=builder /app/node_modules ./node_modules
+
 COPY . .
-EXPOSE 3000
-CMD ["node", "src/app.js"]
+RUN chmod +x /app/start.sh
+
+EXPOSE ${PORT:-3000}
+
+CMD ["/app/start.sh"]
