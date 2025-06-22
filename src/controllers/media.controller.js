@@ -6,6 +6,7 @@ import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import { genreMap } from '../utils/tmdbGenres.js';
 import { walkDir } from '../utils/walkDir.js';
+import * as tmdbApi from '../utils/tmdbApi.js';
 
 const MEDIA_BASE_PATH = process.env.MEDIA_BASE_PATH || '/mnt/nas/Homeflix';
 const MOVIES_DIR = process.env.MOVIES_DIR || 'Movies';
@@ -182,8 +183,6 @@ const downloadPoster = async (url, filename) => {
 };
 
 const fetchTmdbData = async (filename, filepath) => {
-    const apiKey = process.env.TMDB_API_KEY;
-
     let query = path.parse(filename).name;
 
     if (query.includes('-')) {
@@ -199,26 +198,20 @@ const fetchTmdbData = async (filename, filepath) => {
         let result;
 
         if (isMovie) {
-            const response = await axios.get(
-                `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`,
-            );
-            result = response.data.results?.[0];
+            const response = await tmdbApi.searchMovie(query);
+            result = response.results?.[0];
             logger.info(`Found movie match for ${query}`);
         } else if (isSeries) {
-            const response = await axios.get(
-                `https://api.themoviedb.org/3/search/tv?api_key=${apiKey}&query=${encodeURIComponent(query)}`,
-            );
-            result = response.data.results?.[0];
+            const response = await tmdbApi.searchTv(query);
+            result = response.results?.[0];
             logger.info(`Found TV series match for ${query}`);
         } else {
             const [movieResponse, tvResponse] = await Promise.all([
-                axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`),
-                axios.get(`https://api.themoviedb.org/3/search/tv?api_key=${apiKey}&query=${encodeURIComponent(query)}`),
+                tmdbApi.searchMovie(query),
+                tmdbApi.searchTv(query),
             ]);
-
-            const movie = movieResponse.data.results?.[0];
-            const tvShow = tvResponse.data.results?.[0];
-
+            const movie = movieResponse.results?.[0];
+            const tvShow = tvResponse.results?.[0];
             const useMovie = !tvShow || (movie && movie.popularity > tvShow.popularity);
             result = useMovie ? movie : tvShow;
             logger.info(`Used fallback search for ${query}, found ${useMovie ? 'movie' : 'TV series'}`);
@@ -231,25 +224,53 @@ const fetchTmdbData = async (filename, filepath) => {
         const isMovieResult = isMovie || (!isSeries && result.title);
 
         const genres = result.genre_ids ? mapGenres(result.genre_ids) : '';
-        const title = isMovieResult ? (result.title || query) : (result.name || query);
-        const year = isMovieResult
+        let title = isMovieResult ? (result.title || query) : (result.name || query);
+        let year = isMovieResult
             ? result.release_date?.split('-')[0] || ''
             : result.first_air_date?.split('-')[0] || '';
-
+        let description = result.overview || '';
         let poster = '';
-        if (result.poster_path) {
-            const posterUrl = `https://image.tmdb.org/t/p/w500${result.poster_path}`;
+        let language = result.original_language || '';
+        let rating = result.vote_average || 0;
+
+        let seasonNumber = 1;
+        if (!isMovieResult && result.id) {
+            const seasonMatch = filepath.match(/(?:Staffel|Season)[\s_]?(\d+)/i);
+            if (seasonMatch) {
+                seasonNumber = parseInt(seasonMatch[1], 10);
+            }
+            try {
+                const episodes = await tmdbApi.getSeasonEpisodes(result.id, seasonNumber);
+                const firstEpisode = episodes.find(ep => ep.episode_number === 1);
+                if (firstEpisode) {
+                    title = firstEpisode.name || title;
+                    description = firstEpisode.overview || description;
+                    year = firstEpisode.air_date?.split('-')[0] || year;
+                    language = result.original_language || language;
+                    rating = firstEpisode.vote_average || rating;
+                    if (firstEpisode.still_path) {
+                        const posterUrl = tmdbApi.getImageUrl(firstEpisode.still_path);
+                        poster = await downloadPoster(posterUrl, `${query}_S${seasonNumber}E1.jpg`);
+                    }
+                }
+            } catch (err) {
+                logger.warn(`Konnte Episodendaten für Serie ${title} nicht laden: ${err.message}`);
+            }
+        }
+
+        if (!poster && result.poster_path) {
+            const posterUrl = tmdbApi.getImageUrl(result.poster_path);
             poster = await downloadPoster(posterUrl, `${query}.jpg`);
         }
 
         return {
             title,
-            description: result.overview || '',
+            description,
             poster,
             year,
             genre: genres,
-            language: result.original_language || '',
-            rating: result.vote_average || 0,
+            language,
+            rating,
             mediaType: isMovieResult ? 'movie' : 'tv',
         };
     } catch (error) {
@@ -406,4 +427,25 @@ export const getStats = async (req, res, next) => {
     }
 };
 
-
+export const getEpisodeDetails = async (req, res, next) => {
+    try {
+        const { seriesName, seasonNumber, episodeNumber, episodeTitle } = req.query;
+        const searchResult = await tmdbApi.searchTv(seriesName);
+        const series = searchResult.results?.[0];
+        if (!series) {
+            return res.status(404).json({ error: 'Serie nicht gefunden' });
+        }
+        const episodes = await tmdbApi.getSeasonEpisodes(series.id, seasonNumber);
+        const episode = episodes.find(
+            ep =>
+                ep.episode_number === Number(episodeNumber) &&
+                (!episodeTitle || ep.name === episodeTitle),
+        );
+        if (!episode) {
+            return res.status(404).json({ error: 'Episode nicht gefunden' });
+        }
+        res.json(episode);
+    } catch (error) {
+        next(new AppError('Fehler beim Abrufen der Episodendaten', 500));
+    }
+};
