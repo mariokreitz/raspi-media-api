@@ -5,7 +5,7 @@ import path from 'path';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import { genreMap } from '../utils/tmdbGenres.js';
-import { walkDir } from '../utils/helper.js';
+import { walkDir } from '../utils/walkDir.js';
 
 const MEDIA_BASE_PATH = process.env.MEDIA_BASE_PATH || '/mnt/nas/Homeflix';
 const MOVIES_DIR = process.env.MOVIES_DIR || 'Movies';
@@ -13,6 +13,9 @@ const SERIES_DIR = process.env.SERIES_DIR || 'Series';
 const MEDIA_EXTENSIONS = (process.env.MEDIA_EXTENSIONS || '.mp4,.mkv,.avi,.mov')
     .split(',')
     .map(ext => ext.trim().toLowerCase());
+
+const mapGenres = genreIds =>
+    genreIds.map(id => genreMap[id]).filter(Boolean).join(', ');
 
 
 export const getPoster = async (req, res, next) => {
@@ -403,5 +406,4 @@ export const getStats = async (req, res, next) => {
     }
 };
 
-const mapGenres = genreIds =>
-    genreIds.map(id => genreMap[id]).filter(Boolean).join(', ');
+

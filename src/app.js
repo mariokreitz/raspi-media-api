@@ -33,8 +33,27 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use('/api/media', mediaRoutes);
 app.use(errorHandler);
 
+/**
+ * @swagger
+ * /api/media/:
+ *   get:
+ *     summary: Funny API root endpoint
+ *     tags: [Media]
+ *     responses:
+ *       200:
+ *         description: Returns a funny greeting
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
 app.get('/', (req, res) => {
-    res.send('Raspi Media API is running');
+    res.json({
+        message: '🎬 Welcome to Raspi Media API! Yes, this is the root. No popcorn here, just endpoints. 🍿',
+    });
 });
 
 app.listen(port, () => {

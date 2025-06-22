@@ -302,4 +302,30 @@ router.get('/:id/poster', getPoster);
  */
 router.get('/stats', getStats);
 
+/**
+ * @swagger
+ * /api/media/health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Media]
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 uptime:
+ *                   type: number
+ */
+router.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        uptime: process.uptime(),
+    });
+});
+
 export default router;
