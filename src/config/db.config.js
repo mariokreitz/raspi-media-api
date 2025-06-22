@@ -1,9 +1,22 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import fs from 'fs';
+import path from 'path';
+
+const DB_PATH = process.env.DB_PATH || './data/media_catalog.db';
+
+const ensureDbDir = () => {
+    const dir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+};
 
 export async function openDb() {
+    ensureDbDir();
+
     const db = await open({
-        filename: './data/media_catalog.db',
+        filename: DB_PATH,
         driver: sqlite3.Database,
     });
 
@@ -11,7 +24,7 @@ export async function openDb() {
                    (
                        id                INTEGER PRIMARY KEY AUTOINCREMENT,
                        filename          TEXT,
-                       filepath          TEXT,
+                       filepath          TEXT UNIQUE,
                        filesize          INTEGER,
                        title             TEXT,
                        mediaType         TEXT,
@@ -26,6 +39,15 @@ export async function openDb() {
                        playback_position INTEGER DEFAULT 0,
                        last_played       TIMESTAMP
                    )
+    `);
+
+    await db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_media_filepath ON media (filepath);
+        CREATE INDEX IF NOT EXISTS idx_media_title ON media (title);
+        CREATE INDEX IF NOT EXISTS idx_media_genre ON media (genre);
+        CREATE INDEX IF NOT EXISTS idx_media_mediaType ON media (mediaType);
+        CREATE INDEX IF NOT EXISTS idx_media_favorite ON media (favorite);
+        CREATE INDEX IF NOT EXISTS idx_media_watched ON media (watched);
     `);
 
     return db;
