@@ -3,6 +3,7 @@ import {
     getFavorites,
     getGenres,
     getMedia,
+    getPlaybackPosition,
     getStats,
     getWatched,
     scanMedia,
@@ -10,6 +11,7 @@ import {
     streamMedia,
     toggleFavorite,
     toggleWatched,
+    updatePlaybackPosition,
 } from '../controllers/media.controller.js';
 
 const router = express.Router();
@@ -188,6 +190,64 @@ router.get('/favorites', getFavorites);
  *         description: Success
  */
 router.get('/watched', getWatched);
+
+/**
+ * @swagger
+ * /api/media/{id}/position:
+ *   put:
+ *     summary: Set the playback position for a media item
+ *     tags: [Media]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Media ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               position:
+ *                 type: number
+ *                 description: New playback position in seconds
+ *     responses:
+ *       200:
+ *         description: Playback position updated
+ */
+router.put('/media/:id/position', updatePlaybackPosition);
+
+/**
+ * @swagger
+ * /api/media/{id}/position:
+ *   get:
+ *     summary: Get the current playback position for a media item
+ *     tags: [Media]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Media ID
+ *     responses:
+ *       200:
+ *         description: Current playback position
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 position:
+ *                   type: number
+ *                   description: Playback position in seconds
+ *       404:
+ *         description: Media or position not found
+ */
+router.get('/media/:id/position', getPlaybackPosition);
 
 /**
  * @swagger

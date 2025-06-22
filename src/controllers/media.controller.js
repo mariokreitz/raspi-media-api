@@ -281,6 +281,43 @@ export const searchMedia = async (req, res, next) => {
     }
 };
 
+export const updatePlaybackPosition = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { position } = req.body;
+
+        const db = await openDb();
+        await db.run(
+            'UPDATE media SET playback_position = ?, last_played = CURRENT_TIMESTAMP WHERE id = ?',
+            [position, id],
+        );
+
+        res.status(200).json({ message: 'Wiedergabeposition aktualisiert' });
+    } catch (error) {
+        next(new AppError('Fehler beim Aktualisieren der Wiedergabeposition', 500));
+    }
+};
+
+export const getPlaybackPosition = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const db = await openDb();
+        const media = await db.get(
+            'SELECT playback_position, last_played FROM media WHERE id = ?',
+            [id],
+        );
+
+        if (!media) {
+            return next(new AppError('Medium nicht gefunden', 404));
+        }
+
+        res.status(200).json(media);
+    } catch (error) {
+        next(new AppError('Fehler beim Abrufen der Wiedergabeposition', 500));
+    }
+};
+
 export const toggleFavorite = async (req, res, next) => {
     try {
         const db = await openDb();

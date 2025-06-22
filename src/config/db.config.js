@@ -9,23 +9,24 @@ export async function openDb() {
 
     await db.exec(`CREATE TABLE IF NOT EXISTS media
                    (
-                       id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                       filename    TEXT,
-                       filepath    TEXT,
-                       filesize    INTEGER,
-                       title       TEXT,
-                       mediaType   TEXT,
-                       description TEXT,
-                       poster      TEXT,
-                       year        TEXT,
-                       genre       TEXT,
-                       language    TEXT,
-                       rating      REAL,
-                       watched     INTEGER DEFAULT 0,
-                       favorite    INTEGER DEFAULT 0
+                       id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                       filename          TEXT,
+                       filepath          TEXT,
+                       filesize          INTEGER,
+                       title             TEXT,
+                       mediaType         TEXT,
+                       description       TEXT,
+                       poster            TEXT,
+                       year              TEXT,
+                       genre             TEXT,
+                       language          TEXT,
+                       rating            REAL,
+                       watched           INTEGER DEFAULT 0,
+                       favorite          INTEGER DEFAULT 0,
+                       playback_position INTEGER DEFAULT 0,
+                       last_played       TIMESTAMP
                    )
     `);
 
     return db;
 }
-
