@@ -1,9 +1,46 @@
 ### Building and running your application
 
-When you're ready, start your application by running:
+To build and start your application, run:
 `docker compose up --build`.
 
 Your application will be available at http://localhost:3000.
+
+#### Environment variables
+
+You can configure the application using environment variables, either via a `.env` file or directly in your compose
+command. Important variables include:
+
+- `PORT` (default: 3000)
+- `TMDB_API_KEY`
+- `MEDIA_BASE_PATH` (default: `/mnt/nas/Homeflix`)
+- `MOVIES_DIR` (default: `Movies`)
+- `SERIES_DIR` (default: `Series`)
+- (for Windows/NAS) `NAS_SERVER`, `NAS_SHARE`, `NAS_USER`, `NAS_PASS`
+
+#### Volumes
+
+The application stores persistent data (e.g. posters, database) in the `./data` directory, which is mounted into the
+container at `/app/data`.
+
+#### Profiles
+
+The `docker-compose.yaml` provides different profiles for various environments:
+
+- `base`: Standard-Konfiguration (nutzt lokale Daten)
+- `windows`: Für Windows mit SMB/NAS-Mount (setzt zusätzliche NAS-Variablen, benötigt privilegierten Modus)
+- `linux`: Für Linux mit direktem Host-Mount (bind-mount auf MEDIA_BASE_PATH)
+
+Example for Windows:
+
+```
+docker compose --profile windows up --build
+```
+
+Example for Linux:
+
+```
+docker compose --profile linux up --build
+```
 
 ### Deploying your application to the cloud
 
@@ -19,4 +56,5 @@ Consult Docker's [getting started](https://docs.docker.com/go/get-started-sharin
 docs for more detail on building and pushing.
 
 ### References
+
 * [Docker's Node.js guide](https://docs.docker.com/language/nodejs/)
